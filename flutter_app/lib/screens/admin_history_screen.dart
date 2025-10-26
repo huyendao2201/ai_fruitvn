@@ -3,6 +3,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../utils/constants.dart';
+import '../utils/timezone_helper.dart';
 import '../models/admin_models.dart';
 
 class AdminHistoryScreen extends StatefulWidget {
@@ -272,7 +273,10 @@ class _AdminHistoryScreenState extends State<AdminHistoryScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      item.createdAt.substring(0, 19).replaceAll('T', ' '),
+                      TimezoneHelper.formatDateTime(
+                        DateTime.parse(item.createdAt),
+                        isUtc: true,
+                      ),
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.grey,

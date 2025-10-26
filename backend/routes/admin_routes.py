@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from backend.models.database import db, Prediction, Feedback, TrainingLog, User
+from backend.utils.timezone import get_current_time
 from sqlalchemy import func, desc
 from datetime import datetime, timedelta
 import os
@@ -56,7 +57,7 @@ def dashboard():
         fruit_distribution.sort(key=lambda x: x['count'], reverse=True)
         
         # Xu hướng dự đoán 7 ngày gần đây
-        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        seven_days_ago = get_current_time() - timedelta(days=7)
         recent_predictions = db.session.query(
             func.date(Prediction.created_at).label('date'),
             func.count(Prediction.id).label('count')
@@ -345,7 +346,7 @@ def add_image_to_training(feedback_id):
         os.makedirs(train_dir, exist_ok=True)
         
         # Tạo tên file mới với timestamp để tránh trùng lặp
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = get_current_time().strftime('%Y%m%d_%H%M%S')
         file_extension = os.path.splitext(source_image_path)[1]
         new_filename = f'user_feedback_{feedback_id}_{timestamp}{file_extension}'
         dest_image_path = os.path.join(train_dir, new_filename)
@@ -374,7 +375,7 @@ def add_image_to_training(feedback_id):
         # Cập nhật feedback để đánh dấu đã thêm vào training
         feedback.added_to_training = True
         feedback.training_label = correct_label
-        feedback.added_to_training_at = datetime.utcnow()
+        feedback.added_to_training_at = get_current_time()
         db.session.commit()
         
         # Đếm số lượng ảnh hiện tại trong thư mục

@@ -3,6 +3,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../utils/constants.dart';
+import '../utils/timezone_helper.dart';
 import '../models/admin_models.dart';
 
 class AdminTrainingScreen extends StatefulWidget {
@@ -208,7 +209,10 @@ class _AdminTrainingScreenState extends State<AdminTrainingScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        log.dateTrained.substring(0, 19).replaceAll('T', ' '),
+                        TimezoneHelper.formatDateTime(
+                          DateTime.parse(log.dateTrained),
+                          isUtc: true,
+                        ),
                         style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.grey,

@@ -1,6 +1,18 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+import sys
+import os
+
+# Thêm đường dẫn backend vào sys.path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+try:
+    from backend.utils.timezone import get_current_time
+except ImportError:
+    # Fallback nếu không import được
+    def get_current_time():
+        return datetime.utcnow()
 
 db = SQLAlchemy()
 
@@ -12,7 +24,7 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     password = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), default='user', nullable=False)  # 'user' hoặc 'admin'
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=get_current_time, nullable=False)
     
     # Quan hệ
     predictions = db.relationship('Prediction', backref='user', lazy=True, cascade='all, delete-orphan')
@@ -102,7 +114,7 @@ class TrainingLog(db.Model):
     val_accuracy = db.Column(db.Float, nullable=True)
     val_loss = db.Column(db.Float, nullable=True)
     epochs = db.Column(db.Integer, nullable=True)
-    date_trained = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    date_trained = db.Column(db.DateTime, default=get_current_time, nullable=False)
     notes = db.Column(db.Text, nullable=True)
     
     def to_dict(self):

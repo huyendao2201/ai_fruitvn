@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../utils/constants.dart';
+import '../utils/timezone_helper.dart';
 import '../models/admin_models.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -608,7 +609,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 '${(training.valAccuracy! * 100).toStringAsFixed(2)}%',
               ),
             _buildInfoRow('Epochs', training.epochs?.toString() ?? 'N/A'),
-            _buildInfoRow('Ngày huấn luyện', training.dateTrained.substring(0, 10)),
+            _buildInfoRow(
+              'Ngày huấn luyện',
+              TimezoneHelper.formatDate(
+                DateTime.parse(training.dateTrained),
+                isUtc: true,
+              ),
+            ),
           ],
         ),
       ),
