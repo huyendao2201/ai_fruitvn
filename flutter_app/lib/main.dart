@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/storage_service.dart';
 import 'utils/constants.dart';
 import 'screens/home_screen.dart';
@@ -11,6 +12,9 @@ import 'screens/admin_training_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
   
   // Khởi tạo StorageService
   await StorageService.init();

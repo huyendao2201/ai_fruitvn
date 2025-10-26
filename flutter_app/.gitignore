@@ -97,5 +97,5 @@ assets/fonts/*.ttf
 assets/fonts/*.otf
 !assets/fonts/README.md
 
-
-
+# Environment variables (local configuration)
+.env

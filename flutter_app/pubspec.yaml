@@ -28,6 +28,9 @@ dependencies:
   # Loading Animations
   flutter_spinkit: ^5.2.0
   intl: ^0.20.2
+  
+  # Environment Variables
+  flutter_dotenv: ^5.1.0
 
 dev_dependencies:
   flutter_test:
@@ -42,6 +45,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - .env
 
 # Cấu hình icon cho ứng dụng
 flutter_launcher_icons:

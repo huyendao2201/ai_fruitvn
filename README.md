@@ -207,8 +207,12 @@ flutter run
 
 | File | Mô Tả | Dành Cho |
 |------|-------|----------|
+| **QUICKSTART_ENV.md** | ⚡ Setup nhanh Environment Variables | **BẮT ĐẦU TỪ ĐÂY** |
+| **DEVELOPMENT_SETUP.md** | 🛠️ Setup đầy đủ cho team | Developers |
 | **MYSQL_QUICKSTART_VI.md** | ⚡ Hướng dẫn MySQL nhanh (3 bước) | Người mới |
 | **flutter_app/QUICKSTART_VI.md** | ⚡ Hướng dẫn Flutter nhanh | Người mới |
+| **MACOS_SETUP.md** | 🍎 Hướng dẫn chạy trên macOS | macOS users |
+| **TEST_CONNECTION.md** | 🧪 Test kết nối Backend | Troubleshooting |
 
 ### 📖 Chi Tiết
 

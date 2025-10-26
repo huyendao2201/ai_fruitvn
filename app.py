@@ -75,14 +75,17 @@ def create_app(config_name='development'):
     
     @jwt.invalid_token_loader
     def invalid_token_callback(error):
+        print(f'❌ [JWT] Invalid token: {error}')
         return jsonify({'error': 'Token truy cập không hợp lệ'}), 401
     
     @jwt.expired_token_loader
     def expired_token_callback(jwt_header, jwt_data):
+        print(f'⏰ [JWT] Token expired: {jwt_data}')
         return jsonify({'error': 'Token truy cập đã hết hạn'}), 401
     
     @jwt.unauthorized_loader
     def missing_token_callback(error):
+        print(f'⚠️ [JWT] Missing token: {error}')
         return jsonify({'error': 'Thiếu token truy cập'}), 401
     
     return app

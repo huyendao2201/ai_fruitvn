@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // Cấu hình API
 class ApiConstants {
-  // TODO: Đổi IP này theo môi trường của bạn:
-  // - Windows: http://192.168.1.51:5000/api
-  // - macOS (localhost): http://localhost:5000/api
-  // - macOS (IP thật): http://YOUR_MAC_IP:5000/api
-  // - Android Emulator: http://10.0.2.2:5000/api
-  static const String baseUrl = 'http://localhost:5000/api';
+  // Đọc API URL từ file .env
+  // Mỗi developer có thể cấu hình riêng mà không ảnh hưởng đến người khác
+  static String get baseUrl {
+    return dotenv.env['API_BASE_URL'] ?? 'http://localhost:5000/api';
+  }
   
   // Endpoints
   static const String predict = '/predict';
@@ -15,6 +15,7 @@ class ApiConstants {
   static const String loginAdmin = '/auth/login_admin';
   static const String logoutAdmin = '/auth/logout_admin';
   static const String registerAdmin = '/auth/register_admin';
+  static const String refresh = '/auth/refresh';
   static const String dashboard = '/admin/dashboard';
   static const String history = '/admin/history';
   static const String feedback = '/admin/feedback';
@@ -113,6 +114,7 @@ class FruitNames {
 // Khóa lưu trữ cục bộ
 class StorageKeys {
   static const String accessToken = 'access_token';
+  static const String refreshToken = 'refresh_token';
   static const String userId = 'user_id';
   static const String username = 'username';
   static const String userRole = 'user_role';

@@ -193,11 +193,13 @@ class TrainingLog {
 class LoginResponse {
   final String message;
   final String accessToken;
+  final String? refreshToken;
   final UserData user;
 
   LoginResponse({
     required this.message,
     required this.accessToken,
+    this.refreshToken,
     required this.user,
   });
 
@@ -205,6 +207,7 @@ class LoginResponse {
     return LoginResponse(
       message: json['message'] ?? '',
       accessToken: json['access_token'] ?? '',
+      refreshToken: json['refresh_token'],
       user: UserData.fromJson(json['user']),
     );
   }

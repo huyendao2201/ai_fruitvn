@@ -24,9 +24,15 @@ def dashboard():
     Bảng điều khiển quản trị viên - Trả về dữ liệu thống kê
     """
     # Kiểm tra quyền quản trị viên
+    current_user_id = get_jwt_identity()
+    print(f'🔍 [Admin] Dashboard request from user ID: {current_user_id}')
+    
     auth_error = admin_required()
     if auth_error:
+        print(f'❌ [Admin] Authorization failed')
         return auth_error
+    
+    print(f'✅ [Admin] Authorization successful')
     
     try:
         # Tổng số dự đoán

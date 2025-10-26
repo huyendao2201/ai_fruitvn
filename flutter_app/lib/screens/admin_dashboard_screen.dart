@@ -33,7 +33,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     });
 
     try {
-      // Load access token
+      // Load access token và refresh token
       final token = StorageService.getAccessToken();
       if (token == null) {
         // Không có token, quay về màn hình đăng nhập
@@ -44,6 +44,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       }
       
       _apiService.setAccessToken(token);
+      
+      // Load refresh token nếu có
+      final refreshToken = StorageService.getRefreshToken();
+      if (refreshToken != null) {
+        _apiService.setRefreshToken(refreshToken);
+      }
+      
       final data = await _apiService.getDashboard();
       
       setState(() {

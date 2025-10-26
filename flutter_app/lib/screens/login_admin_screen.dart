@@ -44,6 +44,9 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
 
       // Lưu thông tin đăng nhập
       await StorageService.saveAccessToken(response.accessToken);
+      if (response.refreshToken != null) {
+        await StorageService.saveRefreshToken(response.refreshToken!);
+      }
       await StorageService.saveUserId(response.user.id);
       await StorageService.saveUsername(response.user.username);
       await StorageService.saveUserRole(response.user.role);
