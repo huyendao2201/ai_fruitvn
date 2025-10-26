@@ -87,10 +87,6 @@ wheels/
 .env
 
 # Models
-models/*.h5
-models/*.keras
-*.h5
-*.keras
 
 # Uploads
 uploads/*
