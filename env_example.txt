@@ -1,0 +1,23 @@
+# Flask Configuration
+SECRET_KEY=your-secret-key-here-change-in-production
+JWT_SECRET_KEY=your-jwt-secret-key-here-change-in-production
+
+# MySQL Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_mysql_password_here
+DB_NAME=fruit_recognition_db
+
+# File Upload Configuration
+UPLOAD_FOLDER=uploads
+MAX_CONTENT_LENGTH=16777216
+
+# Model Configuration
+MODEL_PATH=models/fruit_classifier.h5
+
+# Environment
+FLASK_ENV=development
+
+
+

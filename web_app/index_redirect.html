@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chuyển hướng...</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: white;
+    }
+    
+    .container {
+      text-align: center;
+      padding: 40px;
+    }
+    
+    .logo {
+      font-size: 80px;
+      margin-bottom: 20px;
+      animation: bounce 1s infinite;
+    }
+    
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+    
+    p {
+      font-size: 18px;
+      opacity: 0.9;
+    }
+    
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 30px auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🍎</div>
+    <h1>Nhận Diện Trái Cây Việt Nam</h1>
+    <p>Đang chuyển hướng đến trang đăng nhập...</p>
+    <div class="spinner"></div>
+  </div>
+
+  <script>
+    // Kiểm tra đã đăng nhập chưa
+    const accessToken = localStorage.getItem('accessToken');
+    
+    // Redirect sau 1 giây
+    setTimeout(() => {
+      if (accessToken) {
+        window.location.href = 'index.html';
+      } else {
+        window.location.href = 'login.html';
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
+
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chuyển hướng...</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: white;
+    }
+    
+    .container {
+      text-align: center;
+      padding: 40px;
+    }
+    
+    .logo {
+      font-size: 80px;
+      margin-bottom: 20px;
+      animation: bounce 1s infinite;
+    }
+    
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+    
+    p {
+      font-size: 18px;
+      opacity: 0.9;
+    }
+    
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 30px auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🍎</div>
+    <h1>Nhận Diện Trái Cây Việt Nam</h1>
+    <p>Đang chuyển hướng đến trang đăng nhập...</p>
+    <div class="spinner"></div>
+  </div>
+
+  <script>
+    // Kiểm tra đã đăng nhập chưa
+    const accessToken = localStorage.getItem('accessToken');
+    
+    // Redirect sau 1 giây
+    setTimeout(() => {
+      if (accessToken) {
+        window.location.href = 'index.html';
+      } else {
+        window.location.href = 'login.html';
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
+
+
+

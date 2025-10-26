@@ -1,0 +1,29 @@
+{
+  "model_version": "20251026_024016",
+  "timestamp": "2025-10-26T02:40:16.759609",
+  "epochs_trained": 16,
+  "final_train_accuracy": 0.9374460577964783,
+  "final_val_accuracy": 0.8767772316932678,
+  "final_train_loss": 0.18556484580039978,
+  "final_val_loss": 0.35773807764053345,
+  "test_accuracy": 0.8620689511299133,
+  "test_loss": 0.42426031827926636,
+  "num_classes": 10,
+  "classes": [
+    "buoi_da_xanh",
+    "cam_sanh_ha_giang",
+    "chom_chom_long_khanh",
+    "mang_cut_lai_thieu",
+    "nhan_long_hung_yen",
+    "sau_rieng_ri6",
+    "thanh_long_binh_thuan",
+    "vai_thieu_luc_ngan",
+    "vu_sua_lo_ren",
+    "xoai_cat_hoa_loc"
+  ],
+  "image_size": [
+    224,
+    224
+  ],
+  "batch_size": 32
+}
