@@ -15,7 +15,6 @@ class ApiConstants {
   static const String loginAdmin = '/auth/login_admin';
   static const String logoutAdmin = '/auth/logout_admin';
   static const String registerAdmin = '/auth/register_admin';
-  static const String refresh = '/auth/refresh';
   static const String dashboard = '/admin/dashboard';
   static const String history = '/admin/history';
   static const String feedback = '/admin/feedback';
@@ -113,8 +112,6 @@ class FruitNames {
 
 // Khóa lưu trữ cục bộ
 class StorageKeys {
-  static const String accessToken = 'access_token';
-  static const String refreshToken = 'refresh_token';
   static const String userId = 'user_id';
   static const String username = 'username';
   static const String userRole = 'user_role';

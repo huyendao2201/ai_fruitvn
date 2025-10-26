@@ -8,48 +8,6 @@ class StorageService {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  // Access Token
-  static Future<void> saveAccessToken(String token) async {
-    print('💾 [Storage] Saving access token: ${token.substring(0, 20)}...');
-    await _prefs?.setString(StorageKeys.accessToken, token);
-    print('✅ [Storage] Access token saved successfully');
-  }
-
-  static String? getAccessToken() {
-    final token = _prefs?.getString(StorageKeys.accessToken);
-    if (token != null) {
-      print('🔑 [Storage] Retrieved access token: ${token.substring(0, 20)}...');
-    } else {
-      print('⚠️ [Storage] No access token found');
-    }
-    return token;
-  }
-
-  static Future<void> removeAccessToken() async {
-    await _prefs?.remove(StorageKeys.accessToken);
-  }
-
-  // Refresh Token
-  static Future<void> saveRefreshToken(String token) async {
-    print('💾 [Storage] Saving refresh token: ${token.substring(0, 20)}...');
-    await _prefs?.setString(StorageKeys.refreshToken, token);
-    print('✅ [Storage] Refresh token saved successfully');
-  }
-
-  static String? getRefreshToken() {
-    final token = _prefs?.getString(StorageKeys.refreshToken);
-    if (token != null) {
-      print('🔄 [Storage] Retrieved refresh token: ${token.substring(0, 20)}...');
-    } else {
-      print('⚠️ [Storage] No refresh token found');
-    }
-    return token;
-  }
-
-  static Future<void> removeRefreshToken() async {
-    await _prefs?.remove(StorageKeys.refreshToken);
-  }
-
   // User ID
   static Future<void> saveUserId(int userId) async {
     await _prefs?.setInt(StorageKeys.userId, userId);
@@ -91,13 +49,11 @@ class StorageService {
 
   // Check if logged in
   static bool isLoggedIn() {
-    return getAccessToken() != null;
+    return getUserId() != null;
   }
 
   // Clear all data
   static Future<void> clearAll() async {
-    await removeAccessToken();
-    await removeRefreshToken();
     await removeUserId();
     await removeUsername();
     await removeUserRole();

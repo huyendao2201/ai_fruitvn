@@ -4,7 +4,6 @@ Backend Hệ thống Nhận diện Trái cây Việt Nam
 """
 from flask import Flask, jsonify
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager
 from backend.config import config
 from backend.models.database import db, init_db, create_default_admin
 from backend.routes import register_routes
@@ -19,9 +18,6 @@ def create_app(config_name='development'):
     
     # Bật CORS
     CORS(app, resources={r"/api/*": {"origins": "*"}})
-    
-    # Khởi tạo JWT
-    jwt = JWTManager(app)
     
     # Khởi tạo cơ sở dữ liệu
     init_db(app)
@@ -72,21 +68,6 @@ def create_app(config_name='development'):
     @app.errorhandler(500)
     def internal_error(error):
         return jsonify({'error': 'Lỗi máy chủ nội bộ'}), 500
-    
-    @jwt.invalid_token_loader
-    def invalid_token_callback(error):
-        print(f'❌ [JWT] Invalid token: {error}')
-        return jsonify({'error': 'Token truy cập không hợp lệ'}), 401
-    
-    @jwt.expired_token_loader
-    def expired_token_callback(jwt_header, jwt_data):
-        print(f'⏰ [JWT] Token expired: {jwt_data}')
-        return jsonify({'error': 'Token truy cập đã hết hạn'}), 401
-    
-    @jwt.unauthorized_loader
-    def missing_token_callback(error):
-        print(f'⚠️ [JWT] Missing token: {error}')
-        return jsonify({'error': 'Thiếu token truy cập'}), 401
     
     return app
 

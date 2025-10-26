@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../services/api_service.dart';
-import '../services/storage_service.dart';
 import '../utils/constants.dart';
 import '../utils/timezone_helper.dart';
 import '../models/admin_models.dart';
@@ -32,11 +31,6 @@ class _AdminTrainingScreenState extends State<AdminTrainingScreen> {
     });
 
     try {
-      final token = StorageService.getAccessToken();
-      if (token != null) {
-        _apiService.setAccessToken(token);
-      }
-
       final data = await _apiService.getTrainingLogs();
       
       setState(() {

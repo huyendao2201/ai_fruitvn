@@ -1,5 +1,4 @@
-from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
+from flask import Blueprint, jsonify, request, session
 from backend.models.database import db, Prediction, Feedback, TrainingLog, User
 from backend.utils.timezone import get_current_time
 from sqlalchemy import func, desc
@@ -12,26 +11,25 @@ admin_bp = Blueprint('admin', __name__)
 
 def admin_required():
     """Kiểm tra quyền quản trị viên"""
-    claims = get_jwt()
-    if claims.get('role') != 'admin':
+    if 'user_id' not in session:
+        return jsonify({'error': 'Chưa đăng nhập'}), 401
+    if session.get('role') != 'admin':
         return jsonify({'error': 'Không đủ quyền, cần quyền quản trị viên'}), 403
     return None
 
 @admin_bp.route('/dashboard', methods=['GET'])
-@jwt_required()
 def dashboard():
     """
     Bảng điều khiển quản trị viên - Trả về dữ liệu thống kê
     """
     # Kiểm tra quyền quản trị viên
-    current_user_id = get_jwt_identity()
-    print(f'🔍 [Admin] Dashboard request from user ID: {current_user_id}')
-    
     auth_error = admin_required()
     if auth_error:
         print(f'❌ [Admin] Authorization failed')
         return auth_error
     
+    current_user_id = session.get('user_id')
+    print(f'🔍 [Admin] Dashboard request from user ID: {current_user_id}')
     print(f'✅ [Admin] Authorization successful')
     
     try:
@@ -102,7 +100,6 @@ def dashboard():
         return jsonify({'error': f'Lấy dữ liệu bảng điều khiển thất bại: {str(e)}'}), 500
 
 @admin_bp.route('/history', methods=['GET'])
-@jwt_required()
 def history_admin():
     """
     Lấy tất cả lịch sử dự đoán
@@ -148,7 +145,6 @@ def history_admin():
         return jsonify({'error': f'Lấy lịch sử thất bại: {str(e)}'}), 500
 
 @admin_bp.route('/feedback', methods=['GET'])
-@jwt_required()
 def feedback_admin():
     """
     Lấy tất cả phản hồi người dùng
@@ -205,7 +201,6 @@ def feedback_admin():
         return jsonify({'error': f'Lấy phản hồi thất bại: {str(e)}'}), 500
 
 @admin_bp.route('/training_logs', methods=['GET'])
-@jwt_required()
 def training_logs():
     """Lấy tất cả nhật ký huấn luyện"""
     # Kiểm tra quyền quản trị viên
@@ -222,7 +217,6 @@ def training_logs():
         return jsonify({'error': f'Lấy nhật ký huấn luyện thất bại: {str(e)}'}), 500
 
 @admin_bp.route('/feedback/<int:feedback_id>/mark_read', methods=['PUT'])
-@jwt_required()
 def mark_feedback_read(feedback_id):
     """
     Đánh dấu feedback đã xem/chưa xem
@@ -257,7 +251,6 @@ def mark_feedback_read(feedback_id):
         return jsonify({'error': f'Cập nhật trạng thái thất bại: {str(e)}'}), 500
 
 @admin_bp.route('/feedback/mark_all_read', methods=['PUT'])
-@jwt_required()
 def mark_all_feedback_read():
     """Đánh dấu tất cả feedback là đã xem"""
     # Kiểm tra quyền quản trị viên
@@ -278,7 +271,6 @@ def mark_all_feedback_read():
         return jsonify({'error': f'Cập nhật trạng thái thất bại: {str(e)}'}), 500
 
 @admin_bp.route('/users', methods=['GET'])
-@jwt_required()
 def get_users():
     """Lấy danh sách tất cả người dùng"""
     # Kiểm tra quyền quản trị viên
@@ -295,7 +287,6 @@ def get_users():
         return jsonify({'error': f'Lấy danh sách người dùng thất bại: {str(e)}'}), 500
 
 @admin_bp.route('/feedback/<int:feedback_id>/add_to_training', methods=['POST'])
-@jwt_required()
 def add_image_to_training(feedback_id):
     """
     Thêm hình ảnh từ feedback vào training dataset

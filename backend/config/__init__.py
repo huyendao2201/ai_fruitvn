@@ -6,7 +6,6 @@ load_dotenv()
 class Config:
     """Lớp cấu hình cơ bản"""
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
-    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-change-in-production')
     
     # Cấu hình cơ sở dữ liệu
     DB_HOST = os.getenv('DB_HOST', 'localhost')
@@ -55,10 +54,6 @@ class Config:
         'vu_sua_lo_ren': 'Vú Sữa Lò Rèn',
         'xoai_cat_hoa_loc': 'Xoài Cát Hòa Lộc'
     }
-    
-    # Cấu hình JWT - Thêm refresh token
-    JWT_ACCESS_TOKEN_EXPIRES = 24 * 60 * 60  # 24 giờ
-    JWT_REFRESH_TOKEN_EXPIRES = 30 * 24 * 60 * 60  # 30 ngày
 
 class DevelopmentConfig(Config):
     """Cấu hình môi trường phát triển"""

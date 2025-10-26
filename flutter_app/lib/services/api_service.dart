@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import '../models/prediction_model.dart';
 import '../models/admin_models.dart';
 import '../utils/constants.dart';
-import 'storage_service.dart';
 
 // Exception cho lỗi xác thực
 class UnauthorizedException implements Exception {
@@ -17,84 +16,11 @@ class UnauthorizedException implements Exception {
 
 class ApiService {
   final String baseUrl = ApiConstants.baseUrl;
-  String? _accessToken;
-  String? _refreshToken;
-  bool _isRefreshing = false;
 
-  void setAccessToken(String token) {
-    _accessToken = token;
-  }
-
-  void setRefreshToken(String token) {
-    _refreshToken = token;
-  }
-
-  void clearAccessToken() {
-    _accessToken = null;
-  }
-
-  void clearRefreshToken() {
-    _refreshToken = null;
-  }
-
-  Map<String, String> _getHeaders({bool includeAuth = false}) {
-    final headers = {
+  Map<String, String> _getHeaders() {
+    return {
       'Content-Type': 'application/json',
     };
-    if (includeAuth && _accessToken != null) {
-      headers['Authorization'] = 'Bearer $_accessToken';
-    }
-    return headers;
-  }
-
-  // Làm mới access token tự động
-  Future<bool> _refreshAccessToken() async {
-    if (_isRefreshing) {
-      // Đang refresh, chờ một chút
-      await Future.delayed(Duration(milliseconds: 500));
-      return _accessToken != null;
-    }
-
-    if (_refreshToken == null) {
-      print('⚠️ [API] No refresh token available');
-      return false;
-    }
-
-    _isRefreshing = true;
-    
-    try {
-      print('🔄 [API] Refreshing access token...');
-      final uri = Uri.parse('$baseUrl${ApiConstants.refresh}');
-      final response = await http.post(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_refreshToken',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(utf8.decode(response.bodyBytes));
-        final newAccessToken = data['access_token'];
-        
-        setAccessToken(newAccessToken);
-        
-        // Lưu token mới vào storage
-        await StorageService.saveAccessToken(newAccessToken);
-        
-        print('✅ [API] Token refreshed successfully');
-        _isRefreshing = false;
-        return true;
-      } else {
-        print('❌ [API] Token refresh failed: ${response.statusCode}');
-        _isRefreshing = false;
-        return false;
-      }
-    } catch (e) {
-      print('💥 [API] Token refresh error: $e');
-      _isRefreshing = false;
-      return false;
-    }
   }
 
   // Dự đoán trái cây
@@ -159,14 +85,8 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         final loginResponse = LoginResponse.fromJson(data);
-        setAccessToken(loginResponse.accessToken);
         
-        if (loginResponse.refreshToken != null) {
-          setRefreshToken(loginResponse.refreshToken!);
-          print('🔄 [API] Refresh token: ${loginResponse.refreshToken!.substring(0, 20)}...');
-        }
-        
-        print('✅ [API] Login successful, token: ${loginResponse.accessToken.substring(0, 20)}...');
+        print('✅ [API] Login successful');
         return loginResponse;
       } else {
         final error = json.decode(utf8.decode(response.bodyBytes));
@@ -185,25 +105,22 @@ class ApiService {
       final uri = Uri.parse('$baseUrl${ApiConstants.logoutAdmin}');
       await http.post(
         uri,
-        headers: _getHeaders(includeAuth: true),
+        headers: _getHeaders(),
       );
-      clearAccessToken();
     } catch (e) {
-      clearAccessToken();
       throw Exception('Lỗi đăng xuất: $e');
     }
   }
 
-  // Lấy dữ liệu dashboard với auto-refresh
-  Future<DashboardData> getDashboard({bool isRetry = false}) async {
+  // Lấy dữ liệu dashboard
+  Future<DashboardData> getDashboard() async {
     try {
       final uri = Uri.parse('$baseUrl${ApiConstants.dashboard}');
       print('🔍 [API] Calling dashboard: $uri');
-      print('🔑 [API] Token: ${_accessToken?.substring(0, 20)}...');
       
       final response = await http.get(
         uri,
-        headers: _getHeaders(includeAuth: true),
+        headers: _getHeaders(),
       );
 
       print('📊 [API] Dashboard response status: ${response.statusCode}');
@@ -212,23 +129,10 @@ class ApiService {
         final data = json.decode(utf8.decode(response.bodyBytes));
         print('✅ [API] Dashboard loaded successfully');
         return DashboardData.fromJson(data);
-      } else if (response.statusCode == 401 && !isRetry) {
-        // Token hết hạn, thử refresh và retry
-        print('🔄 [API] Token expired, attempting refresh...');
-        final refreshed = await _refreshAccessToken();
-        
-        if (refreshed) {
-          print('✅ [API] Token refreshed, retrying request...');
-          return getDashboard(isRetry: true);
-        } else {
-          print('❌ [API] Token refresh failed');
-          throw UnauthorizedException('Token không hợp lệ hoặc đã hết hạn');
-        }
       } else if (response.statusCode == 401 || response.statusCode == 403) {
-        // Token không hợp lệ sau khi retry
         final error = json.decode(utf8.decode(response.bodyBytes));
         print('❌ [API] Unauthorized: ${error['error']}');
-        throw UnauthorizedException(error['error'] ?? 'Token không hợp lệ');
+        throw UnauthorizedException(error['error'] ?? 'Chưa đăng nhập');
       } else {
         final error = json.decode(utf8.decode(response.bodyBytes));
         print('❌ [API] Error ${response.statusCode}: ${error['error']}');
@@ -259,7 +163,7 @@ class ApiService {
       
       final response = await http.get(
         uri,
-        headers: _getHeaders(includeAuth: true),
+        headers: _getHeaders(),
       );
 
       if (response.statusCode == 200) {
@@ -295,7 +199,7 @@ class ApiService {
       
       final response = await http.get(
         uri,
-        headers: _getHeaders(includeAuth: true),
+        headers: _getHeaders(),
       );
 
       if (response.statusCode == 200) {
@@ -317,7 +221,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl${ApiConstants.feedback}/$feedbackId/mark_read');
       final response = await http.put(
         uri,
-        headers: _getHeaders(includeAuth: true),
+        headers: _getHeaders(),
         body: json.encode({'is_read': isRead}),
       );
 
@@ -335,7 +239,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl${ApiConstants.feedback}/mark_all_read');
       final response = await http.put(
         uri,
-        headers: _getHeaders(includeAuth: true),
+        headers: _getHeaders(),
       );
 
       if (response.statusCode != 200) {
@@ -352,7 +256,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl${ApiConstants.trainingLogs}');
       final response = await http.get(
         uri,
-        headers: _getHeaders(includeAuth: true),
+        headers: _getHeaders(),
       );
 
       if (response.statusCode == 200) {
@@ -377,7 +281,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl${ApiConstants.feedback}/$feedbackId/add_to_training');
       final response = await http.post(
         uri,
-        headers: _getHeaders(includeAuth: true),
+        headers: _getHeaders(),
         body: json.encode({'correct_label': correctLabel}),
       );
 
@@ -390,6 +294,6 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Lỗi thêm vào training: $e');
-}
-}
+    }
+  }
 }

@@ -1,13 +1,5 @@
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import (
-    create_access_token, 
-    create_refresh_token,
-    jwt_required, 
-    get_jwt_identity,
-    get_jwt
-)
+from flask import Blueprint, request, jsonify, session
 from backend.models.database import db, User
-from datetime import timedelta
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -76,77 +68,37 @@ def login_admin():
         if user.role != 'admin':
             return jsonify({'error': 'Không đủ quyền, chỉ quản trị viên mới có thể đăng nhập'}), 403
         
-        # Tạo access token và refresh token
-        access_token = create_access_token(
-            identity=user.id,
-            additional_claims={'role': user.role},
-            expires_delta=timedelta(hours=24)
-        )
-        
-        refresh_token = create_refresh_token(
-            identity=user.id,
-            additional_claims={'role': user.role},
-            expires_delta=timedelta(days=30)
-        )
+        # Lưu thông tin vào session
+        session['user_id'] = user.id
+        session['username'] = user.username
+        session['role'] = user.role
         
         print(f'✅ [Auth] Login successful for user: {username} (ID: {user.id})')
-        print(f'🔑 [Auth] Access token created: {access_token[:20]}...')
-        print(f'🔄 [Auth] Refresh token created: {refresh_token[:20]}...')
         
         return jsonify({
             'message': 'Đăng nhập thành công',
-            'access_token': access_token,
-            'refresh_token': refresh_token,
             'user': user.to_dict()
         }), 200
         
     except Exception as e:
         return jsonify({'error': f'Đăng nhập thất bại: {str(e)}'}), 500
 
-@auth_bp.route('/refresh', methods=['POST'])
-@jwt_required(refresh=True)
-def refresh():
-    """
-    Làm mới access token bằng refresh token
-    Header: Authorization: Bearer <refresh_token>
-    """
-    try:
-        current_user_id = get_jwt_identity()
-        claims = get_jwt()
-        
-        # Tạo access token mới
-        new_access_token = create_access_token(
-            identity=current_user_id,
-            additional_claims={'role': claims.get('role')},
-            expires_delta=timedelta(hours=24)
-        )
-        
-        print(f'🔄 [Auth] Token refreshed for user ID: {current_user_id}')
-        print(f'🔑 [Auth] New access token: {new_access_token[:20]}...')
-        
-        return jsonify({
-            'access_token': new_access_token
-        }), 200
-        
-    except Exception as e:
-        return jsonify({'error': f'Làm mới token thất bại: {str(e)}'}), 500
-
 @auth_bp.route('/logout_admin', methods=['POST'])
-@jwt_required()
 def logout_admin():
     """
     Đăng xuất quản trị viên
-    Lưu ý: JWT là stateless, thực tế không cần xử lý phía server
-    Client chỉ cần xóa token
     """
+    session.clear()
     return jsonify({'message': 'Đăng xuất thành công'}), 200
 
-@auth_bp.route('/verify_token', methods=['GET'])
-@jwt_required()
-def verify_token():
-    """Xác thực token có hợp lệ không"""
-    current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
+@auth_bp.route('/verify_session', methods=['GET'])
+def verify_session():
+    """Xác thực session có hợp lệ không"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Chưa đăng nhập'}), 401
+    
+    user_id = session.get('user_id')
+    user = User.query.get(user_id)
     
     if not user:
         return jsonify({'error': 'Người dùng không tồn tại'}), 404
