@@ -14,5 +14,5 @@ def register_routes(app):
     app.register_blueprint(prediction_bp, url_prefix='/api')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     
-    print("✅ Đã đăng ký tất cả routes thành công!")
+    print("[OK] Da dang ky tat ca routes thanh cong!")
 

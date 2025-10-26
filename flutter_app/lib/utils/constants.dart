@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 
 // Cấu hình API
 class ApiConstants {
-  static const String baseUrl = 'http://192.168.1.36:5000/api';
+  // TODO: Đổi IP này theo môi trường của bạn:
+  // - Windows: http://192.168.1.51:5000/api
+  // - macOS (localhost): http://localhost:5000/api
+  // - macOS (IP thật): http://YOUR_MAC_IP:5000/api
+  // - Android Emulator: http://10.0.2.2:5000/api
+  static const String baseUrl = 'http://localhost:5000/api';
   
   // Endpoints
   static const String predict = '/predict';

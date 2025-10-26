@@ -34,15 +34,35 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     try {
       // Load access token
       final token = StorageService.getAccessToken();
-      if (token != null) {
-        _apiService.setAccessToken(token);
+      if (token == null) {
+        // Không có token, quay về màn hình đăng nhập
+        if (!mounted) return;
+        await StorageService.clearAll();
+        Navigator.pushReplacementNamed(context, '/admin_login');
+        return;
       }
-
+      
+      _apiService.setAccessToken(token);
       final data = await _apiService.getDashboard();
+      
       setState(() {
         _dashboardData = data;
         _isLoading = false;
       });
+    } on UnauthorizedException {
+      // Token không hợp lệ hoặc hết hạn - Tự động logout
+      await StorageService.clearAll();
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'),
+          backgroundColor: AppColors.error,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      
+      Navigator.pushReplacementNamed(context, '/admin_login');
     } catch (e) {
       setState(() {
         _errorMessage = 'Lỗi tải dữ liệu: $e';
@@ -106,28 +126,51 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             )
           : _errorMessage != null
               ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: AppColors.error,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _errorMessage!,
-                        style: const TextStyle(
-                          fontSize: 16,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 64,
                           color: AppColors.error,
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: _loadDashboard,
-                        child: const Text('Thử lại'),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        Text(
+                          _errorMessage!,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: AppColors.error,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: _loadDashboard,
+                          child: const Text('Thử lại'),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: () async {
+                            await StorageService.clearAll();
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Đã xóa dữ liệu. Vui lòng đăng nhập lại.'),
+                                backgroundColor: AppColors.success,
+                              ),
+                            );
+                            Navigator.pushReplacementNamed(context, '/admin_login');
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Xóa dữ liệu & Đăng nhập lại'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 )
               : RefreshIndicator(

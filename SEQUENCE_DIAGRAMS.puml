@@ -1,0 +1,504 @@
+@startuml SEQUENCE_DIAGRAMS
+!theme plain
+
+title Sequence Diagrams - Hệ Thống Nhận Diện Trái Cây Việt Nam
+
+'==============================================================================
+' SEQUENCE 1: NGƯỜI DÙNG NHẬN DIỆN TRÁI CÂY
+'==============================================================================
+
+@startuml seq1_user_predict
+title Sequence 1: Người Dùng Nhận Diện Trái Cây (UC-01, UC-02, UC-03)
+
+actor "👤 User" as User
+participant "📱 Flutter App" as App
+participant "🌐 Flask API" as API
+participant "🤖 AI Model\n(CNN)" as AI
+database "🗄️ MySQL\nDatabase" as DB
+participant "📁 File\nStorage" as Storage
+
+== UC-01: Chụp/Chọn Ảnh ==
+User -> App: Mở app
+activate App
+User -> App: Chọn "Chụp ảnh" hoặc\n"Chọn từ thư viện"
+App -> App: Hiển thị ảnh đã chọn
+App --> User: Hiển thị preview ảnh
+
+== UC-02: Nhận Diện Trái Cây ==
+User -> App: Nhấn "Nhận Diện"
+App -> API: POST /api/predict\n(multipart/form-data: image)
+activate API
+
+API -> API: Validate file format\n(JPG, PNG, JPEG, GIF)
+alt File không hợp lệ
+    API --> App: Error 400\n"Định dạng không hỗ trợ"
+    App --> User: Hiển thị lỗi
+else File hợp lệ
+    API -> Storage: Lưu ảnh vào uploads/
+    activate Storage
+    Storage --> API: image_path
+    deactivate Storage
+    
+    API -> AI: predict(image_path)
+    activate AI
+    AI -> AI: 1. Load image
+    AI -> AI: 2. Resize 224x224
+    AI -> AI: 3. Normalize (/ 255)
+    AI -> AI: 4. Predict với CNN model
+    AI -> AI: 5. Get top 5 predictions
+    AI --> API: {\n  label: "xoai_cat_hoa_loc",\n  label_vn: "Xoài Cát Hòa Lộc",\n  confidence: 0.95,\n  all_predictions: [...]\n}
+    deactivate AI
+    
+    API -> DB: INSERT INTO predictions\n(user_id, image_path,\npredicted_label, confidence)
+    activate DB
+    DB --> API: prediction_id
+    deactivate DB
+    
+    API --> App: 200 OK\n{\n  prediction_id: 123,\n  label: "xoai_cat_hoa_loc",\n  label_vn: "Xoài Cát Hòa Lộc",\n  confidence: 95.5,\n  image_url: "/api/uploads/...",\n  all_predictions: [top 5]\n}
+    deactivate API
+    
+    == UC-03: Xem Kết Quả ==
+    App -> App: Parse response
+    App --> User: Hiển thị kết quả:\n━━━━━━━━━━━━━━━━\n🍎 Xoài Cát Hòa Lộc\n📊 Độ tin cậy: 95.5%\n🖼️ [Ảnh]\n📋 Top 5 dự đoán khác
+end
+
+deactivate App
+
+note right of User
+  **Thời gian**: < 2 giây
+  **Độ chính xác**: ~90%+
+end note
+
+@enduml
+
+'==============================================================================
+' SEQUENCE 2: GỬI PHẢN HỒI
+'==============================================================================
+
+@startuml seq2_user_feedback
+title Sequence 2: Người Dùng Gửi Phản Hồi (UC-04)
+
+actor "👤 User" as User
+participant "📱 Flutter App" as App
+participant "🌐 Flask API" as API
+database "🗄️ MySQL\nDatabase" as DB
+
+User -> App: Xem kết quả dự đoán
+activate App
+
+User -> App: Nhấn "Gửi Phản Hồi"
+App -> App: Hiển thị form feedback
+
+alt Kết quả đúng ✅
+    User -> App: Chọn "Đúng"\n+ Nhập comment (optional)
+else Kết quả sai ❌
+    User -> App: Chọn "Sai"\n+ Nhập comment (optional)
+end
+
+User -> App: Nhấn "Gửi"
+
+App -> API: POST /api/feedback_user\n{\n  prediction_id: 123,\n  is_correct: true/false,\n  comment: "..."\n}
+activate API
+
+API -> API: Validate request data
+alt Thiếu tham số
+    API --> App: Error 400\n"Thiếu tham số bắt buộc"
+    App --> User: Hiển thị lỗi
+else Hợp lệ
+    API -> DB: SELECT * FROM predictions\nWHERE id = 123
+    activate DB
+    alt Không tìm thấy prediction
+        DB --> API: NULL
+        API --> App: Error 404\n"Dự đoán không tồn tại"
+        App --> User: Hiển thị lỗi
+    else Tìm thấy
+        DB --> API: prediction data
+        deactivate DB
+        
+        API -> DB: INSERT INTO feedback\n(prediction_id, is_correct,\ncomment, is_read=false,\nadded_to_training=false)
+        activate DB
+        DB --> API: feedback_id
+        deactivate DB
+        
+        API --> App: 201 Created\n{\n  message: "Gửi phản hồi thành công",\n  feedback: {...}\n}
+        deactivate API
+        
+        App --> User: ✅ "Cảm ơn đánh giá của bạn!"
+    end
+end
+
+deactivate App
+
+note right of User
+  **Feedback được lưu để**:
+  - Admin review
+  - Cải thiện mô hình
+  - Thống kê độ chính xác
+end note
+
+@enduml
+
+'==============================================================================
+' SEQUENCE 3: ADMIN ĐĂNG NHẬP
+'==============================================================================
+
+@startuml seq3_admin_login
+title Sequence 3: Admin Đăng Nhập (UC-05)
+
+actor "👨‍💼 Admin" as Admin
+participant "📱 Flutter App" as App
+participant "🌐 Flask API" as API
+database "🗄️ MySQL\nDatabase" as DB
+
+Admin -> App: Mở màn hình Admin
+activate App
+App --> Admin: Hiển thị form đăng nhập
+
+Admin -> App: Nhập username: "admin"\nNhập password: "admin123"
+Admin -> App: Nhấn "Đăng Nhập"
+
+App -> API: POST /api/auth/login_admin\n{\n  username: "admin",\n  password: "admin123"\n}
+activate API
+
+API -> API: Validate request
+alt Thiếu username hoặc password
+    API --> App: Error 400\n"Thiếu tên người dùng\nhoặc mật khẩu"
+    App --> Admin: Hiển thị lỗi
+else Hợp lệ
+    API -> DB: SELECT * FROM users\nWHERE username = 'admin'
+    activate DB
+    
+    alt User không tồn tại
+        DB --> API: NULL
+        API --> App: Error 401\n"Tên người dùng hoặc\nmật khẩu không đúng"
+        App --> Admin: Hiển thị lỗi
+    else User tồn tại
+        DB --> API: user data\n(id, username, password_hash, role)
+        deactivate DB
+        
+        API -> API: check_password_hash(\n  password_hash,\n  "admin123"\n)
+        
+        alt Sai mật khẩu
+            API --> App: Error 401\n"Tên người dùng hoặc\nmật khẩu không đúng"
+            App --> Admin: Hiển thị lỗi
+        else Đúng mật khẩu
+            alt Role không phải 'admin'
+                API --> App: Error 403\n"Không đủ quyền,\nchỉ admin mới đăng nhập được"
+                App --> Admin: Hiển thị lỗi
+            else Role = 'admin' ✅
+                API -> API: create_access_token(\n  identity=user_id,\n  role='admin',\n  expires=24h\n)
+                
+                API --> App: 200 OK\n{\n  message: "Đăng nhập thành công",\n  access_token: "eyJ...",\n  user: {\n    id: 1,\n    username: "admin",\n    role: "admin"\n  }\n}
+                deactivate API
+                
+                App -> App: Lưu JWT token\nvào storage
+                App -> App: Chuyển đến Dashboard
+                App --> Admin: ✅ Đăng nhập thành công
+            end
+        end
+    end
+end
+
+deactivate App
+
+note right of Admin
+  **JWT Token**:
+  - Expires: 24 giờ
+  - Claims: {user_id, role}
+  - Dùng cho tất cả admin APIs
+  
+  **Tài khoản mặc định**:
+  - Username: admin
+  - Password: admin123
+end note
+
+@enduml
+
+'==============================================================================
+' SEQUENCE 4: ADMIN XEM DASHBOARD
+'==============================================================================
+
+@startuml seq4_admin_dashboard
+title Sequence 4: Admin Xem Dashboard (UC-06)
+
+actor "👨‍💼 Admin" as Admin
+participant "📱 Flutter App" as App
+participant "🌐 Flask API" as API
+database "🗄️ MySQL\nDatabase" as DB
+
+Admin -> App: Nhấn tab "Dashboard"
+activate App
+
+App -> API: GET /api/admin/dashboard\nAuthorization: Bearer {JWT_TOKEN}
+activate API
+
+API -> API: @jwt_required()\nKiểm tra JWT token
+alt Token không hợp lệ/hết hạn
+    API --> App: Error 401\n"Token không hợp lệ hoặc hết hạn"
+    App --> Admin: Chuyển về màn hình login
+else Token hợp lệ
+    API -> API: Kiểm tra role = 'admin'
+    alt Role không phải admin
+        API --> App: Error 403\n"Không đủ quyền"
+        App --> Admin: Hiển thị lỗi
+    else Role = admin ✅
+        
+        == Lấy Thống Kê Tổng Quan ==
+        API -> DB: SELECT COUNT(*) FROM predictions
+        activate DB
+        DB --> API: total_predictions = 1523
+        
+        API -> DB: SELECT COUNT(*) FROM feedback
+        DB --> API: total_feedback = 458
+        
+        API -> DB: SELECT COUNT(*) FROM feedback\nWHERE is_correct = true
+        DB --> API: correct_feedback = 412
+        
+        API -> DB: SELECT COUNT(*) FROM feedback\nWHERE is_correct = false
+        DB --> API: incorrect_feedback = 46
+        
+        API -> API: accuracy = (412/458) * 100\n          = 89.96%
+        
+        API -> DB: SELECT AVG(confidence)\nFROM predictions
+        DB --> API: avg_confidence = 0.876
+        
+        == Lấy Phân Bố Trái Cây ==
+        API -> DB: SELECT predicted_label,\n       COUNT(*) as count\nFROM predictions\nGROUP BY predicted_label
+        DB --> API: [\n  {label: "xoai_cat_hoa_loc", count: 245},\n  {label: "vai_thieu_luc_ngan", count: 198},\n  ...\n]
+        
+        == Lấy Xu Hướng 7 Ngày ==
+        API -> DB: SELECT DATE(created_at) as date,\n       COUNT(*) as count\nFROM predictions\nWHERE created_at >= NOW() - INTERVAL 7 DAY\nGROUP BY DATE(created_at)
+        DB --> API: [\n  {date: "2024-10-26", count: 45},\n  {date: "2024-10-25", count: 52},\n  ...\n]
+        
+        == Lấy Training Log Mới Nhất ==
+        API -> DB: SELECT * FROM training_logs\nORDER BY date_trained DESC\nLIMIT 1
+        DB --> API: {\n  model_version: "v1.2",\n  accuracy: 0.92,\n  val_accuracy: 0.89,\n  date_trained: "2024-10-20"\n}
+        deactivate DB
+        
+        API --> App: 200 OK\n{\n  total_predictions: 1523,\n  total_feedback: 458,\n  correct_feedback: 412,\n  incorrect_feedback: 46,\n  accuracy: 89.96,\n  avg_confidence: 87.6,\n  fruit_distribution: [...],\n  prediction_trend: [...],\n  latest_training: {...}\n}
+        deactivate API
+        
+        App -> App: Parse data
+        App -> App: Render charts:\n- Pie Chart (phân bố)\n- Line Chart (xu hướng)
+        App -> App: Hiển thị thống kê
+        
+        App --> Admin: Dashboard UI:\n━━━━━━━━━━━━━━━━━━━\n📊 Tổng dự đoán: 1,523\n💬 Tổng feedback: 458\n✅ Đúng: 412 | ❌ Sai: 46\n🎯 Độ chính xác: 89.96%\n📈 Độ tin cậy TB: 87.6%\n\n[Pie Chart - Phân bố]\n[Line Chart - Xu hướng]\n\n🏆 Model v1.2 (Accuracy: 92%)
+    end
+end
+
+deactivate App
+
+note right of Admin
+  **Dashboard refresh**: Real-time
+  **Charts**: 
+  - Pie Chart (react-native-chart-kit)
+  - Line Chart (7 ngày)
+  **Update**: Mỗi khi vào tab
+end note
+
+@enduml
+
+'==============================================================================
+' SEQUENCE 5: ADMIN THÊM ẢNH VÀO TRAINING DATASET
+'==============================================================================
+
+@startuml seq5_admin_add_training
+title Sequence 5: Admin Thêm Ảnh Vào Training Dataset (UC-08c)
+
+actor "👨‍💼 Admin" as Admin
+participant "📱 Flutter App" as App
+participant "🌐 Flask API" as API
+database "🗄️ MySQL\nDatabase" as DB
+participant "📁 Training\nDataset" as Dataset
+
+Admin -> App: Vào tab "Phản Hồi"
+activate App
+App -> API: GET /api/admin/feedback
+API -> DB: SELECT * FROM feedback\nWHERE is_correct = false
+DB --> API: Danh sách feedback sai
+API --> App: feedbacks
+App --> Admin: Hiển thị list feedback\n(Badge: 12 chưa xem)
+
+Admin -> App: Chọn 1 feedback sai\n(ảnh bị nhận diện sai)
+App --> Admin: Hiển thị chi tiết:\n- Ảnh gốc\n- Dự đoán sai: "Xoài"\n- Comment: "Đây là vải thiều"
+
+Admin -> App: Nhấn "Thêm vào Training"
+App --> Admin: Dialog chọn label đúng
+
+Admin -> App: Chọn "vai_thieu_luc_ngan"
+Admin -> App: Nhấn "Xác nhận"
+
+App -> API: POST /api/admin/feedback/123/add_to_training\nAuthorization: Bearer {JWT}\n{\n  correct_label: "vai_thieu_luc_ngan"\n}
+activate API
+
+API -> API: @jwt_required() + admin_required()
+
+alt Không đủ quyền
+    API --> App: Error 403
+    App --> Admin: Hiển thị lỗi
+else Quyền hợp lệ
+    API -> API: Validate correct_label\nin VALID_LABELS (10 loại)
+    
+    alt Label không hợp lệ
+        API --> App: Error 400\n"Label không hợp lệ"
+        App --> Admin: Hiển thị lỗi
+    else Label hợp lệ
+        API -> DB: SELECT * FROM feedback\nWHERE id = 123
+        activate DB
+        DB --> API: feedback data
+        
+        API -> DB: SELECT * FROM predictions\nWHERE id = feedback.prediction_id
+        DB --> API: prediction data\n(image_path = "uploads/abc.jpg")
+        deactivate DB
+        
+        API -> API: Kiểm tra file tồn tại
+        alt File không tồn tại
+            API --> App: Error 404\n"File không tồn tại"
+            App --> Admin: Hiển thị lỗi
+        else File tồn tại
+            API -> API: Open image với PIL
+            API -> API: Convert to RGB\n(handle PNG alpha)
+            API -> API: Resize if needed\n(keep aspect ratio)
+            
+            API -> API: Generate filename:\nuser_feedback_123_20241026_143022.jpg
+            
+            API -> Dataset: Save to:\ndata/train/vai_thieu_luc_ngan/\nuser_feedback_123_20241026_143022.jpg
+            activate Dataset
+            Dataset --> API: Saved successfully
+            deactivate Dataset
+            
+            API -> DB: UPDATE feedback\nSET added_to_training = true,\n    training_label = 'vai_thieu_luc_ngan',\n    added_to_training_at = NOW()\nWHERE id = 123
+            activate DB
+            DB --> API: Updated
+            deactivate DB
+            
+            API -> Dataset: Count images in folder
+            activate Dataset
+            Dataset --> API: total_images = 387
+            deactivate Dataset
+            
+            API --> App: 200 OK\n{\n  message: "Đã thêm ảnh thành công",\n  feedback_id: 123,\n  correct_label: "vai_thieu_luc_ngan",\n  saved_path: "data/train/.../...",\n  total_images_in_category: 387\n}
+            deactivate API
+            
+            App --> Admin: ✅ Success!\n━━━━━━━━━━━━━━━━━━━\nĐã thêm ảnh vào training dataset\n\nCategory: Vải Thiều Lục Ngạn\nTổng ảnh: 387\n\nTiếp theo:\n1. Thêm thêm ảnh (nếu cần)\n2. Chạy: python train_model.py\n3. Model sẽ cải thiện
+        end
+    end
+end
+
+deactivate App
+
+note right of Admin
+  **Sau khi thêm đủ ảnh**:
+  
+  1. SSH vào server
+  2. cd /path/to/project
+  3. source venv/bin/activate
+  4. python train_model.py
+  5. Model mới được lưu
+  6. Độ chính xác cải thiện
+  
+  **Recommended**:
+  - Thêm ít nhất 50 ảnh mới
+  - Balance giữa các categories
+  - Augmentation tự động
+end note
+
+@enduml
+
+'==============================================================================
+' SEQUENCE 6: HUẤN LUYỆN MÔ HÌNH (BONUS)
+'==============================================================================
+
+@startuml seq6_train_model
+title Sequence 6: Huấn Luyện Mô Hình AI (UC-11)
+
+actor "👨‍💻 Developer/Admin" as Dev
+participant "💻 Terminal" as Terminal
+participant "🐍 train_model.py" as Script
+participant "📁 Dataset" as Dataset
+participant "🤖 TensorFlow/Keras" as TF
+participant "💾 Model File" as Model
+database "🗄️ MySQL\nDatabase" as DB
+
+Dev -> Terminal: python train_model.py
+activate Terminal
+Terminal -> Script: Execute
+activate Script
+
+Script -> Dataset: Load training data\nfrom data/train/
+activate Dataset
+Dataset --> Script: 10 folders x N images each
+deactivate Dataset
+
+Script -> Dataset: Load validation data\nfrom data/validation/
+activate Dataset
+Dataset --> Script: 10 folders x M images each
+deactivate Dataset
+
+Script -> Script: Count images:\nTrain: 3,500 images\nValidation: 1,000 images
+
+Script -> TF: Create ImageDataGenerator:\n- rescale=1./255\n- rotation_range=30\n- width_shift_range=0.2\n- height_shift_range=0.2\n- shear_range=0.2\n- zoom_range=0.2\n- horizontal_flip=True\n- fill_mode='nearest'
+activate TF
+
+Script -> TF: Build CNN Model:\n- Conv2D(32) + MaxPooling\n- Conv2D(64) + MaxPooling\n- Conv2D(128) + MaxPooling\n- Flatten\n- Dense(512, activation='relu')\n- Dropout(0.5)\n- Dense(10, activation='softmax')
+
+Script -> TF: Compile model:\n- optimizer='adam'\n- loss='categorical_crossentropy'\n- metrics=['accuracy']
+
+Script -> TF: model.fit(\n  train_generator,\n  epochs=50,\n  validation_data=val_generator,\n  callbacks=[...]\n)
+
+loop Epoch 1 to 50
+    TF -> TF: Training epoch...
+    TF -> Terminal: Epoch 1/50\n━━━━━━━━━━━━━━━━\n110/110 [======] - 45s\nloss: 1.234 - acc: 0.678\nval_loss: 0.987 - val_acc: 0.756
+    
+    TF -> TF: Training epoch...
+    TF -> Terminal: Epoch 2/50\n━━━━━━━━━━━━━━━━\n110/110 [======] - 43s\nloss: 0.876 - acc: 0.789\nval_loss: 0.654 - val_acc: 0.823
+    
+    note over TF
+      ... Continue training ...
+      
+      Best epoch:
+      - Epoch 47/50
+      - val_acc: 0.912
+    end note
+    
+    TF -> Terminal: Epoch 50/50\n━━━━━━━━━━━━━━━━\n110/110 [======] - 42s\nloss: 0.234 - acc: 0.932\nval_loss: 0.289 - val_acc: 0.912
+end
+
+TF --> Script: Training complete!\nBest accuracy: 93.2%\nBest val_accuracy: 91.2%
+deactivate TF
+
+Script -> Model: Save model to:\nmodels/fruit_classifier.h5
+activate Model
+Model --> Script: Saved (52.3 MB)
+deactivate Model
+
+Script -> DB: INSERT INTO training_logs\n(\n  model_version='v1.3',\n  accuracy=0.932,\n  loss=0.234,\n  val_accuracy=0.912,\n  val_loss=0.289,\n  epochs=50,\n  date_trained=NOW(),\n  notes='Added 150 new images...'\n)
+activate DB
+DB --> Script: Log saved (id=5)
+deactivate DB
+
+Script --> Terminal: ✅ Training Complete!\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\nModel Version: v1.3\nAccuracy: 93.2%\nVal Accuracy: 91.2%\nEpochs: 50\nModel saved to: models/fruit_classifier.h5\nTraining log saved (ID: 5)
+deactivate Script
+
+Terminal --> Dev: Training finished successfully!
+deactivate Terminal
+
+note right of Dev
+  **Sau khi training**:
+  
+  1. Restart Flask app
+     python app.py
+  
+  2. Test với ảnh mới
+  
+  3. Admin vào Dashboard
+     → Xem training logs mới
+  
+  4. So sánh accuracy:
+     v1.2: 89% → v1.3: 91.2% ✅
+end note
+
+@enduml
+
+@enduml
+

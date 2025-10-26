@@ -95,11 +95,11 @@ if __name__ == '__main__':
         create_default_admin(app)
     
     print("=" * 60)
-    print("🍉 Đang khởi động API Hệ thống Nhận diện Trái cây Việt Nam...")
+    print("[START] Dang khoi dong API He thong Nhan dien Trai cay Viet Nam...")
     print("=" * 60)
-    print(f"📍 Địa chỉ máy chủ: http://localhost:5000")
-    print(f"📚 Tài liệu API: http://localhost:5000/")
-    print(f"💚 Kiểm tra sức khỏe: http://localhost:5000/api/health")
+    print(f"[URL] Dia chi may chu: http://localhost:5000")
+    print(f"[DOC] Tai lieu API: http://localhost:5000/")
+    print(f"[HEALTH] Kiem tra suc khoe: http://localhost:5000/api/health")
     print("=" * 60)
     
     app.run(host='0.0.0.0', port=5000, debug=True)

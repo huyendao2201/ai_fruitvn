@@ -5,6 +5,15 @@ import '../models/prediction_model.dart';
 import '../models/admin_models.dart';
 import '../utils/constants.dart';
 
+// Exception cho lỗi xác thực
+class UnauthorizedException implements Exception {
+  final String message;
+  UnauthorizedException(this.message);
+  
+  @override
+  String toString() => message;
+}
+
 class ApiService {
   final String baseUrl = ApiConstants.baseUrl;
   String? _accessToken;
@@ -123,10 +132,16 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         return DashboardData.fromJson(data);
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        // Token không hợp lệ hoặc hết hạn
+        final error = json.decode(utf8.decode(response.bodyBytes));
+        throw UnauthorizedException(error['error'] ?? 'Token không hợp lệ');
       } else {
-        throw Exception('Lấy dữ liệu dashboard thất bại: ${response.body}');
+        final error = json.decode(utf8.decode(response.bodyBytes));
+        throw Exception(error['error'] ?? 'Lấy dữ liệu dashboard thất bại');
       }
     } catch (e) {
+      if (e is UnauthorizedException) rethrow;
       throw Exception('Lỗi lấy dữ liệu dashboard: $e');
     }
   }
